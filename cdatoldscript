@@ -1,0 +1,9 @@
+clear
+if [ "$1" == "-r" ] ; then
+# # open for remote terminal window
+  gridsize="$(tput cols)x$(tput lines)"
+else
+# # open for local console
+  gridsize="$(cat /tau/buf/page0/gridsize-tty1)"
+fi
+/tau/src/cdat/a.out -g $gridsize $*

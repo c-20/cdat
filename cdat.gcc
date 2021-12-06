@@ -1,0 +1,10 @@
+gcc -o cdat main.c 2>&1 | _ # grep warning: | _
+if on $1 -o out ; then
+  R- "save as /tau/cmd/cdat"
+  Y- "thus /tau/cmd/cdat is bin...."
+  Y- " so #define SOURCEDIR \"/tau/src/cdat\""
+  C- "  which should redirect to a list of cdat files"
+  G- "  or create dynamic cdat.c which includes all the rest?"
+  M- "  cdat.c #includes main.c, etc > open > file > tree"
+fi
+

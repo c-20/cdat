@@ -1,0 +1,1 @@
+/tau/src/page0/a.out -g "${COLUMNS}x${LINES}"

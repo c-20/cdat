@@ -1,0 +1,4 @@
+if [ "$1" != "na" ] ; then
+  gcc main.c
+fi
+./a.out -r 1360x768

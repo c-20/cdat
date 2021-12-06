@@ -1,0 +1,5 @@
+gcc -o hold hold.c
+if [ "$1" = "-o" ] ; then
+  cp ./hold /tau/cmd/hold
+fi
+

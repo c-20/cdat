@@ -1,0 +1,6 @@
+offset="" # " +100"
+snapshot="$(echo $'\cx' | nano$offset /tau/src/$1 | cat -t | sed -e 's/\^\[/\\e/g' -e 's/\\e\[m//g' -e 's/\\e(B//g' -e 's/\^M/\n/g' \
+          | sed -e 's/\\e\[\([0-9;]*\)[dH]/\\e[0;31m{[\1]}/g' -e 's/\\e\[\([0-9]*\)G/\\e[0;31m{[;\1]}/g' \
+          -e 's/\\e\[\([0-9]*\)X/\\e[0;31m{[;+\1]}/g' | listen '{[3;1]}' '\e[0;7m')"
+echo -e "\e[0;31m{[3]}$snapshot\e[0m"
+# | inflate | listen "{[SOF]}" "{[EOF]}"

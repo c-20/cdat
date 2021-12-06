@@ -1,0 +1,2 @@
+snapshot="$(echo $'\cx' | nano +$2 /tau/src/$1 | cat -t | sed -e 's/\^\[/\\e/g' -e 's/\\e\[m//g' -e 's/\\e(B//g' -e 's/\^M/\n/g' | listen '[3;1H' '\e[38d^G')"
+echo -e "$snapshot\e[0m"

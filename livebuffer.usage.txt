@@ -1,0 +1,94 @@
+[ gpm2-daemon.h ] [ gpm2.h ] [ livebuffer.h ]
+[1;33m    18	FILE *livebufferds[MAXLIVEBUFFERS];
+    19	FILE *livebufferdl[MAXLIVEBUFFERS];
+    21	int livebufferconnectforwriting(int index) {
+    25	  if (!(livebufferds[index] = fopen(filename, "w+"))) return 0;
+    27	  if (!(livebufferdl[index] = fopen(filename, "w"))) return 0;
+    29	  fseek(livebufferds[index], 0, SEEK_SET);
+    30	  fprintf(livebufferds[index], "S[AA]L[    0]W[    0]");
+    31	  fflush(livebufferds[index]);
+    35	int livebufferconnectforreading(int index) {
+    39	  if (!(livebufferds[index] = fopen(filename, "r+"))) return 0;
+    41	  if (!(livebufferdl[index] = fopen(filename, "r"))) return 0;
+    52	int livebuffersyncreader(int index) {
+    55	    fseek(livebufferds[index], 0, SEEK_SET);
+    56	    if (fgetc(livebufferds[index]) == (int)'S') {
+    57	      if (fgetc(livebufferds[index]) == (int)'[') {
+    58	        if (fgetc(livebufferds[index]) == (int)'A') {
+    59	          if (fgetc(livebufferds[index]) == (int)'A') {
+    60	            if (fgetc(livebufferds[index]) == (int)']') {
+    73	char livebufferwriteintarray(int index, int *src, int len) {
+    74	  char livebuffer[LIVEMAXMAXWIDTH * LIVEMAXLENGTH];
+    82	  fseek(livebufferds[index], 0, SEEK_SET);
+    83	  if (fgetc(livebufferds[index]) != (int)'S') return '\0';
+    84	  if (fgetc(livebufferds[index]) != (int)'[') return '\0';
+    85	  writestate = (char)fgetc(livebufferds[index]);
+    86	  readstate = (char)fgetc(livebufferds[index]);
+    87	  if (fgetc(livebufferds[index]) != (int)']') return '\0';
+    88	  if (fgetc(livebufferds[index]) != (int)'L') return '\0';
+    89	  if (fgetc(livebufferds[index]) != (int)'[') return '\0';
+    92	    inch = fgetc(livebufferds[index]);
+    99	  if (fgetc(livebufferds[index]) != (int)'W') return '\0';
+   100	  if (fgetc(livebufferds[index]) != (int)'[') return '\0';
+   103	    inch = fgetc(livebufferds[index]);
+   139	  char *livebufferp = &livebuffer[0];
+   143	    sprintf(livebufferp, formatstring, src[avi]);
+   144	    livebufferp += maxwidth;
+   150	    fseek(livebufferdl[index], 0, SEEK_SET);
+   152	    fwrite(livebuffer, maxwidth, len, livebufferdl[index]);
+   153	    fprintf(livebufferdl[index], "   ");
+   154	    fflush(livebufferdl[index]);
+   156	    fseek(livebufferds[index], LIVEBUFFERFRONTLOC, SEEK_SET);
+   157	    fprintf(livebufferds[index], "%5d", len);
+   168	    fseek(livebufferds[index], LIVEBUFFERBACKLOC, SEEK_SET);
+   169	    fprintf(livebufferds[index], "%5d", maxwidth);//len);
+   218	int livebufferreadfailcount = 0;
+   219	int livebufferreadfailmax = 10;
+   220	char livebufferreadintarray(int index, int *dest, int *len) {
+   229	  fseek(livebufferds[index], 0, SEEK_SET);
+   230	  if (fgetc(livebufferds[index]) != (int)'S') return '\0';
+   231	  if (fgetc(livebufferds[index]) != (int)'[') return '\0';
+   232	  writestate = (char)fgetc(livebufferds[index]);
+   233	  readstate = (char)fgetc(livebufferds[index]);
+   234	  if (fgetc(livebufferds[index]) != (int)']') return '\0';
+   235	  if (fgetc(livebufferds[index]) != (int)'L') return '\0';
+   236	  if (fgetc(livebufferds[index]) != (int)'[') return '\0';
+   239	    inch = fgetc(livebufferds[index]);
+   246	  if (fgetc(livebufferds[index]) != (int)'W') return '\0';
+   247	  if (fgetc(livebufferds[index]) != (int)'[') return '\0';
+   250	    inch = fgetc(livebufferds[index]);
+   274	      fflush(livebufferdl[index]);
+   275	      fseek(livebufferdl[index], 0, SEEK_SET);
+   279	          inch = fgetc(livebufferdl[index]);
+   305	      fseek(livebufferds[index], LIVEBUFFERREADLOC, SEEK_SET);
+   306	      fputc('B', livebufferds[index]);
+   307	      fflush(livebufferds[index]);
+   351	    if (livebufferreadfailcount < livebufferreadfailmax) {
+   353	      livebufferreadfailcount++;
+   375	void livebufferdisconnect(int index) {
+   376	  fseek(livebufferds[index], LIVEBUFFERWRITELOC, SEEK_SET);
+   377	  fputc('X', livebufferds[index]);
+   378	  fseek(livebufferds[index], LIVEBUFFERREADLOC, SEEK_SET);
+   379	  fputc('X', livebufferds[index]);
+   380	  fflush(livebufferds[index]);
+   381	  fclose(livebufferdl[index]);
+   382	  fclose(livebufferds[index]);
+   385	void livebufferdisconnectgracefully(int index) {
+   386	  fseek(livebufferds[index], LIVEBUFFERREADLOC, SEEK_SET);
+   387	  fputc('X', livebufferds[index]);
+   388	  fflush(livebufferds[index]);
+   389	  fclose(livebufferdl[index]);
+   390	  fclose(livebufferds[index]);
+[0m[ gpm2-ps2.c ]
+[1;33m    26	#include "livebuffer.h"
+    37	  livebufferconnectforwriting(1);
+    93	      livebufferwriteintarray(1, output, 3);
+   111	      livebufferwriteintarray(1, output, 3);
+   118	  livebufferdisconnect(1);
+[0m[ gpm2d.c ] [ gpm2d_exit.c ] [ gpm2d_inputloop.c ] [ init.c ] [ mouse_add.c ] [ mouse_init.c ] [ mouse_list.c ] [ mouse_start.c ] [ readmouse.c ]
+[1;33m     4	#include "livebuffer.h"
+    59	  livebufferconnectforreading(1);
+    62	    livebufferreadintarray(1, output, &outputlen);
+    81	  livebufferdisconnectgracefully(1);
+[0m[ *.cpp ] [ *.php ] [ *.html ] [ *.css ] [ *.js ] [ *.m ] [ gpm2hack.sh ] [ *.json ] 
+[found 89 occurrences in 3 files]
